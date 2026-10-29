@@ -4,7 +4,7 @@ A responsive, two-person Teen Patti house variant. Static HTML, CSS and JavaScri
 
 ## Play
 
-Open the hosted HTTPS page. Enter your name, a shared room code and a password (default `pass`). One person creates the table; the other joins. Keep both pages open. Exactly two seats are accepted. Each starts with 100 chips and antes 5 per hand. Blind wagers are 5 per unit; seen wagers are 10. Check, bet, raise, call, reveal or fold on your turn. A call or two checks triggers showdown. Both players agree before another hand or a fresh match. Full house rules appear in the page.
+Open the hosted HTTPS page. Enter your name, a shared room code and a password (default `pass`). One person creates the table; the other joins. Keep both pages open. Exactly two seats are accepted. Each starts with 100 chips and antes 5 per hand. Blind wagers are 5 per unit; seen wagers are 10. Check, bet, raise, call, reveal or fold on your turn. Calling keeps betting open. Two consecutive checks immediately reveal both hands and settle the pot. Both players choose Next hand to keep playing with their balances, or restart with 100 each when a player cannot ante. Full house rules appear in the page.
 
 ## Run and test
 

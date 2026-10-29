@@ -80,4 +80,57 @@ $('room-form').addEventListener('submit', event => {
 $('leave').onclick = () => stop('You left the table.');
 window.addEventListener('pagehide', () => link?.close());
 function card(c){const el=document.createElement('div');el.className='card';if(!c){el.classList.add('back');el.textContent='♠';el.setAttribute('aria-label','Hidden card');return el;}if(c.s===1||c.s===2)el.classList.add('red');el.textContent=({11:'J',12:'Q',13:'K',14:'A'})[c.r]||c.r;const suit=document.createElement('span');suit.textContent=['♠','♥','♦','♣'][c.s];el.append(suit);return el;}
-function render(){if(!state)return;const me=state.players[seat],active=state.phase==='playing'&&state.turn===seat;for(const [id,i]of [['you',seat],['opponent',1-seat]]){const p=state.players[i],box=$(id);box.replaceChildren();const title=document.createElement('h3');title.textContent=p.name+(i===seat?' · You':'')+(state.phase==='playing'&&state.turn===i?' · TO PLAY':'');if(state.turn===i)title.className='active';const sub=document.createElement('small');sub.textContent=`${p.chips} chips · ${p.seen?'Seen':'Blind'}`;const cards=document.createElement('div');cards.className='cards';p.cards.forEach(c=>cards.append(card(c)));box.append(title,sub,cards);}$('pot').textContent=state.pot;$('notice').textContent=state.phase==='over'?(state.winner===null?'Split pot.':state.players[state.winner].name+' takes the pot!'):active?'Your move. Trust your instinct.':state.players[1-seat].name+' is thinking…';const actions=$('actions');actions.replaceChildren();const button=(text,type,enabled=true)=>{const b=document.createElement('button');b.textContent=text;b.disabled=!enabled;b.onclick=()=>{if(host)command(0,type);else if(link?.open)link.send({type:'action',action:type});};actions.append(b);};if(state.phase!=='playing'){button(state.ready[seat]?'Waiting for rival…':state.players.some(p=>p.chips<5)?'Agree to restart · 100 each':'Ready for next hand','ready',!state.ready[seat]);$('bet-info').textContent='Both players must be ready to deal.';}else{const l=Flash.limits(state,seat);button('See cards','see',active&&!me.seen);button('Check','check',active&&l.call===0);button('Call '+l.call,'call',active&&l.call>0&&l.call<=me.chips);const cost=(state.target+1-me.units)*5*l.factor;button((state.target?'Raise':'Bet')+' '+cost,'raise',active&&state.target+1<=l.max);button('Fold','fold',active);$('bet-info').textContent=`Hand ${state.hand} · ${me.seen?'Seen: 10':'Blind: 5'} chips per unit · A call goes to showdown.`;}$('history').replaceChildren();state.log.slice().reverse().forEach(t=>{const li=document.createElement('li');li.textContent=t;$('history').append(li);});}
+function render() {
+  if (!state) return;
+  const me = state.players[seat];
+  const playing = state.phase === 'playing';
+  const active = playing && state.turn === seat;
+  for (const [id, i] of [['you', seat], ['opponent', 1 - seat]]) {
+    const p = state.players[i], box = $(id);
+    box.replaceChildren();
+    const title = document.createElement('h3');
+    title.textContent = p.name + (i === seat ? ' \u00b7 You' : '');
+    if (playing && state.turn === i) title.className = 'active';
+    const sub = document.createElement('small');
+    sub.textContent = `${p.chips} \u00b7 ${p.seen ? 'Seen' : 'Blind'}`;
+    const cards = document.createElement('div');
+    cards.className = 'cards';
+    p.cards.forEach(c => cards.append(card(c)));
+    box.append(title, sub, cards);
+  }
+  $('pot').textContent = state.pot;
+  $('notice').textContent = state.phase === 'over'
+    ? (state.winner === null ? 'Split pot' : state.players[state.winner].name + ' wins')
+    : active ? 'Your turn' : state.players[1 - seat].name + "'s turn";
+  const actions = $('actions');
+  actions.replaceChildren();
+  const button = (text, type, enabled = true) => {
+    const b = document.createElement('button');
+    b.textContent = text;
+    b.disabled = !enabled;
+    b.onclick = () => {
+      if (host) command(0, type);
+      else if (link?.open) link.send({ type: 'action', action: type });
+    };
+    actions.append(b);
+  };
+  if (!playing) {
+    button(state.ready[seat] ? 'Waiting for ' + state.players[1-seat].name + '...'
+      : state.players.some(p => p.chips < 5) ? 'Restart \u00b7 100 each' : 'Next hand',
+      'ready', !state.ready[seat]);
+  } else {
+    const l = Flash.limits(state, seat);
+    button('See cards', 'see', active && !me.seen);
+    button('Check', 'check', active && l.call === 0);
+    if (l.call > 0) button('Call ' + l.call, 'call', active && l.call <= me.chips);
+    const cost = (state.target + 1 - me.units) * 5 * l.factor;
+    button((state.target ? 'Raise ' : 'Bet ') + cost, 'raise', active && state.target + 1 <= l.max);
+    button('Fold', 'fold', active);
+  }
+  $('history').replaceChildren();
+  state.log.slice().reverse().forEach(t => {
+    const li = document.createElement('li');
+    li.textContent = t;
+    $('history').append(li);
+  });
+}
