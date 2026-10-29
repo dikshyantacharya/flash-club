@@ -17,3 +17,14 @@ console.log('Passed: rankings, deals, hidden cards, turns, blind/seen costs, rai
 
 // Consecutive checks reset after betting; completed hands carry balances forward.
 g=F.create(['A','B']);F.deal(g);F.act(g,0,'check');F.act(g,1,'raise');F.act(g,0,'call');F.act(g,1,'check');assert.equal(g.phase,'playing');F.act(g,0,'check');assert.equal(g.phase,'over');const balances=g.players.map(p=>p.chips);F.deal(g);assert.deepEqual(g.players.map(p=>p.chips),balances.map(n=>n-5));assert.equal(g.hand,2);assert.deepEqual(g.ready,[false,false]);assert(F.view(g,0).players.every(p=>p.cards.every(c=>c===null)));
+
+// Paid show: settle immediately; flat fee is added to the pot, never doubled.
+function total(g){return g.pot+g.players.reduce((n,p)=>n+p.chips,0);}
+g=F.create(['A','B']);F.deal(g);F.act(g,0,'raise');assert.equal(F.limits(g,1).show,10);F.act(g,1,'show');assert.equal(g.phase,'over');assert.equal(g.players[1].units,1);assert.equal(total(g),200);assert(F.view(g,0).players.every(p=>p.cards.every(Boolean)));assert(g.log.some(s=>s.includes('5 call + 5 show')));
+g=F.create(['A','B']);F.deal(g);F.act(g,0,'raise');F.act(g,1,'see');assert.equal(F.limits(g,1).show,15);F.act(g,1,'show');assert.equal(g.phase,'over');assert.equal(total(g),200);assert(g.log.some(s=>s.includes('10 call + 5 show')));
+g=F.create(['A','B']);F.deal(g);F.act(g,0,'raise');F.act(g,1,'call');assert.equal(F.limits(g,0).show,5);F.act(g,0,'show');assert.equal(g.phase,'over');assert.equal(total(g),200);
+g=F.create(['A','B']);F.deal(g);F.act(g,0,'check');assert.equal(F.limits(g,1).show,5);F.act(g,1,'show');assert.equal(g.phase,'over');assert.equal(total(g),200);
+g=F.create(['A','B']);F.deal(g);g.players[0].cards=hand([2,2,2]);g.players[1].cards=hand([3,3,3]);F.act(g,0,'show');assert.equal(g.winner,1);assert.deepEqual(g.players.map(p=>p.chips),[90,110]);
+g=F.create(['A','B']);F.deal(g);g.players[0].cards=hand([14,9,4]);g.players[1].cards=hand([14,9,4],[1,2,3]);F.act(g,0,'show');assert.equal(g.winner,null);assert.equal(total(g),200);
+g=F.create(['A','B']);F.deal(g);while(g.target<19)F.act(g,g.turn,'raise');let snapshot=JSON.stringify(g);assert.throws(()=>F.act(g,g.turn,'show'),/Not enough chips/);assert.equal(JSON.stringify(g),snapshot);F.act(g,g.turn,'call');F.act(g,g.turn,'check');F.act(g,g.turn,'check');assert.equal(g.phase,'over');assert.equal(total(g),200);
+console.log('Paid show passed: blind/seen, matched bets, one check, winner payout, ties, and insufficient chips.');

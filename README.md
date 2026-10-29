@@ -4,7 +4,7 @@ A responsive, two-person Teen Patti house variant. Static HTML, CSS and JavaScri
 
 ## Play
 
-Open the hosted HTTPS page. Enter your name, a shared room code and a password (default `pass`). One person creates the table; the other joins. Keep both pages open. Exactly two seats are accepted. Each starts with 100 chips and antes 5 per hand. Blind wagers are 5 per unit; seen wagers are 10. Check, bet, raise, call, reveal or fold on your turn. Calling keeps betting open. Two consecutive checks immediately reveal both hands and settle the pot. Both players choose Next hand to keep playing with their balances, or restart with 100 each when a player cannot ante. Full house rules appear in the page.
+Open the hosted HTTPS page. Enter your name, a shared room code and a password (default `pass`). One person creates the table; the other joins. Keep both pages open. Exactly two seats are accepted. Each starts with 100 chips and antes 5 per hand. Blind wagers are 5 per unit; seen wagers are 10. Check, bet, raise, call, reveal or fold on your turn. Calling keeps betting open. Show pays the outstanding call plus a flat 5 into the pot and immediately reveals both hands; when bets match, Show costs 5. The extra 5 is the same for blind and seen players. Two consecutive checks immediately reveal both hands and settle the pot for free. Both players choose Next hand to keep playing with their balances, or restart with 100 each when a player cannot ante. Full house rules appear in the page.
 
 ## Run and test
 
@@ -16,7 +16,7 @@ Create a public GitHub repository and push these source files to `main`. Under *
 
 ## Multiplayer limits
 
-Version 2 replaces PeerJS/WebRTC with MQTT over secure WebSockets at `wss://broker.emqx.io:8084/mqtt`. Both browsers make outbound connections to the same relay; no direct browser connection, UDP, STUN, TURN, account or application server is required. MQTT.js 5.10.4 is bundled locally under `vendor/`, with its MIT license. Google Fonts is optional; system fonts are the fallback.
+The relay transport replaces PeerJS/WebRTC with MQTT over secure WebSockets at `wss://broker.emqx.io:8084/mqtt`. Both browsers make outbound connections to the same relay; no direct browser connection, UDP, STUN, TURN, account or application server is required. MQTT.js 5.10.4 is bundled locally under `vendor/`, with its MIT license. Google Fonts is optional; system fonts are the fallback.
 
 EMQX's free public broker is a shared testing service with no availability guarantee. Internet access and permission to reach its secure WebSocket endpoint are required. Relay failures now report relay-specific errors, and a missing room/password mismatch reports that no table answered. A failed session can be created/joined again. Hosting on GitHub Pages remains free and static; GitHub does not provide the multiplayer relay.
 
@@ -27,3 +27,5 @@ The host is authoritative and keeps the deck in its browser; the guest receives 
 ## Files
 
 `index.html`: interface; `style.css`: responsive styling; `engine.js`: game rules; `app.js`: interface wiring; `transport.js`: encrypted rooms; `test.js`: engine verification; `transport.test.js`: isolated and live transport verification; `vendor/`: bundled MQTT.js and license.
+
+Updated clients use the v4 room namespace, so old-version tables cannot block new tables with the same code/password. Existing tabs keep their old in-memory sessions until they leave, close, or refresh; there is no central table store or global administrative delete.

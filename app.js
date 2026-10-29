@@ -125,6 +125,7 @@ function render() {
     if (l.call > 0) button('Call ' + l.call, 'call', active && l.call <= me.chips);
     const cost = (state.target + 1 - me.units) * 5 * l.factor;
     button((state.target ? 'Raise ' : 'Bet ') + cost, 'raise', active && state.target + 1 <= l.max);
+    button('Show ' + l.show, 'show', active && l.show <= me.chips);
     button('Fold', 'fold', active);
   }
   $('history').replaceChildren();

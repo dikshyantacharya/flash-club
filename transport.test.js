@@ -96,6 +96,16 @@ function room(options) { const value = new RelayRoom(options); rooms.push(value)
   assert.equal(guestState.phase, 'playing');
   assert(guestState.players.every(p => p.cards.every(c => c === null)));
   assert.equal(game.players.reduce((n, p) => n + p.chips, 0) + game.pot, 200);
+  guest.send({ type: 'action', action: 'raise' });
+  await until(() => guestState.turn === 0 && guestState.target === 1, 'second hand guest bet');
+  Flash.act(game, 0, 'call');
+  host.send({ type: 'state', value: Flash.view(game, 1) });
+  await until(() => guestState.turn === 1, 'matched bets');
+  guest.send({ type: 'action', action: 'show' });
+  await until(() => guestState.phase === 'over', 'guest paid show');
+  assert(guestState.players.every(p => p.cards.every(Boolean)));
+  assert(game.log.some(s => s.includes('0 call + 5 show')));
+  assert.equal(game.players.reduce((n, p) => n + p.chips, 0), 200);
   const thirdErrors = [];
   const third = room({ room: code, password, isHost: false, name: 'Third', onError: e => thirdErrors.push(e) });
   await third.start();
@@ -122,5 +132,5 @@ function room(options) { const value = new RelayRoom(options); rooms.push(value)
   guest.close();
   await until(() => errors.length, 'leave notification');
   assert.match(errors[0], /other player left/);
-  console.log((live ? 'LIVE WSS' : 'LOCAL') + ' PASS: encrypted room handshake, duplicate room, two-seat limit, hidden cards, host/guest actions, showdown, and leave.');
+  console.log((live ? 'LIVE WSS' : 'LOCAL') + ' PASS: encrypted room handshake, duplicate room, two-seat limit, hidden cards, host/guest actions, paid show, showdown, and leave.');
 })().catch(error => { console.error(error); process.exitCode = 1; }).finally(() => { rooms.forEach(r => r.dispose()); });

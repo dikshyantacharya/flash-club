@@ -29,9 +29,9 @@
       try {
         if (!root.mqtt || !root.crypto?.subtle) throw Error('This browser needs an HTTPS page with Web Crypto support.');
         const { room, password } = this.options;
-        this.topic = 'flashclub/v2/' + hex(await crypto.subtle.digest('SHA-256', encode.encode(room + '\0' + password)));
+        this.topic = 'flashclub/v4/' + hex(await crypto.subtle.digest('SHA-256', encode.encode(room + '\0' + password)));
         const material = await crypto.subtle.importKey('raw', encode.encode(password), 'PBKDF2', false, ['deriveKey']);
-        this.key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt: encode.encode('flashclub/v2/' + room), iterations: 150000, hash: 'SHA-256' }, material, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+        this.key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt: encode.encode('flashclub/v4/' + room), iterations: 150000, hash: 'SHA-256' }, material, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
         if (this.closed) return;
         this.status('Connecting to the encrypted room relay…');
         this.client = root.mqtt.connect('wss://broker.emqx.io:8084/mqtt', {
@@ -82,7 +82,7 @@
       }, 5000);
     }
     sendPacket(kind, value = null, to = null) {
-      const packet = { v: 2, id: crypto.randomUUID(), from: this.id, to, time: Date.now(), kind, value };
+      const packet = { v: 4, id: crypto.randomUUID(), from: this.id, to, time: Date.now(), kind, value };
       this.outgoing = this.outgoing.then(async () => {
         if (this.closed || !this.client?.connected) return;
         const iv = crypto.getRandomValues(new Uint8Array(12));
@@ -100,7 +100,7 @@
         const plaintext = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: unbase64(wire.iv) }, this.key, unbase64(wire.body));
         packet = JSON.parse(decode.decode(plaintext));
       } catch { return; } // Ignore other users' or invalid ciphertext on the public relay.
-      if (this.closed || packet.v !== 2 || typeof packet.from !== 'string' || typeof packet.id !== 'string' || typeof packet.time !== 'number' || Math.abs(Date.now() - packet.time) > 120000 || packet.from === this.id || (packet.to && packet.to !== this.id) || this.received.has(packet.id)) return;
+      if (this.closed || packet.v !== 4 || typeof packet.from !== 'string' || typeof packet.id !== 'string' || typeof packet.time !== 'number' || Math.abs(Date.now() - packet.time) > 120000 || packet.from === this.id || (packet.to && packet.to !== this.id) || this.received.has(packet.id)) return;
       this.received.add(packet.id);
       if (this.received.size > 512) this.received.delete(this.received.values().next().value);
       const { kind, from, value } = packet;
