@@ -18,7 +18,7 @@ function update() {
   render();
   if (link?.open) link.send({ type: 'state', value: Flash.view(game, 1) });
 }
-function command(id, type) {
+function command(id, type, amount) {
   try {
     if (type === 'ready') {
       if (game.phase === 'playing') throw Error('Finish this hand first.');
@@ -27,7 +27,7 @@ function command(id, type) {
         if (game.players.some(p => p.chips < 5)) game = Flash.create(game.players.map(p => p.name));
         Flash.deal(game);
       }
-    } else Flash.act(game, id, type);
+    } else Flash.act(game, id, type, amount);
     update();
   } catch (error) {
     if (id === 0) $('notice').textContent = error.message;
@@ -66,7 +66,7 @@ $('room-form').addEventListener('submit', event => {
     onMessage: data => {
       if (token !== session || !data || typeof data !== 'object') return;
       if (host) {
-        if (data.type === 'action' && typeof data.action === 'string') command(1, data.action);
+        if (data.type === 'action' && typeof data.action === 'string') command(1, data.action, data.amount);
       } else if (data.type === 'state') {
         state = data.value;
         $('lobby').hidden = true;
@@ -104,26 +104,52 @@ function render() {
     : active ? 'Your turn' : state.players[1 - seat].name + "'s turn";
   const actions = $('actions');
   actions.replaceChildren();
-  const button = (text, type, enabled = true) => {
+  const button = (text, type, enabled = true, amount) => {
     const b = document.createElement('button');
     b.textContent = text;
     b.disabled = !enabled;
     b.onclick = () => {
-      if (host) command(0, type);
-      else if (link?.open) link.send({ type: 'action', action: type });
+      if (host) command(0, type, amount?.());
+      else if (link?.open) link.send({ type: 'action', action: type, amount: amount?.() });
     };
     actions.append(b);
+    return b;
   };
   if (!playing) {
     button(state.ready[seat] ? 'Waiting for ' + state.players[1-seat].name + '...'
-      : state.players.some(p => p.chips < 5) ? 'Restart \u00b7 100 each' : 'Next hand',
+      : state.players.some(p => p.chips < 5) ? 'Restart \u00b7 1000 each' : 'Next hand',
       'ready', !state.ready[seat]);
   } else {
     const l = Flash.limits(state, seat);
     button('See cards', 'see', active && !me.seen);
     button((state.wagers ? 'Call ' : 'Bet ') + l.call, 'call', active && l.call <= me.chips);
-    const cost = (state.target + 1) * 5 * l.factor;
-    button('Raise ' + cost, 'raise', active && state.target + 1 <= l.max);
+    const min = (state.target + 1) * 5, max = l.max * 5;
+    const canRaise = active && min <= max;
+    const control = document.createElement('div');
+    control.className = 'raise-control';
+    const label = document.createElement('label');
+    label.htmlFor = 'raise-stake';
+    const slider = document.createElement('input');
+    slider.id = 'raise-stake';
+    slider.type = 'range';
+    slider.min = min;
+    slider.max = Math.max(min, max);
+    slider.step = 5;
+    slider.value = min;
+    slider.disabled = !canRaise;
+    const output = document.createElement('output');
+    output.htmlFor = slider.id;
+    label.append('Blind stake: ', output);
+    control.append(label, slider);
+    actions.append(control);
+    const raise = button('', 'raise', canRaise, () => Number(slider.value));
+    const showRaise = () => {
+      output.textContent = slider.value;
+      raise.textContent = 'Raise ' + Number(slider.value) * l.factor;
+      slider.setAttribute('aria-valuetext', 'Blind stake ' + slider.value + ', pay ' + Number(slider.value) * l.factor);
+    };
+    slider.addEventListener('input', showRaise);
+    showRaise();
     if (l.canShow) button('Show ' + l.show, 'show', active && l.show <= me.chips);
     button('Fold', 'fold', active);
   }

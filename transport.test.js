@@ -50,7 +50,7 @@ function room(options) { const value = new RelayRoom(options); rooms.push(value)
   const host = room({ room: code, password, isHost: true, name: 'Host',
     onError: error => errors.push(error),
     onConnect: name => { hostConnected++; game = Flash.create(['Host', name]); Flash.deal(game); host.send({ type: 'state', value: Flash.view(game, 1) }); },
-    onMessage: data => { if (data.type === 'action') { Flash.act(game, 1, data.action); host.send({ type: 'state', value: Flash.view(game, 1) }); } }
+    onMessage: data => { if (data.type === 'action') { Flash.act(game, 1, data.action, data.amount); host.send({ type: 'state', value: Flash.view(game, 1) }); } }
   });
   await host.start();
   await until(() => host.active || errors.length, 'host registration');
@@ -94,17 +94,17 @@ function room(options) { const value = new RelayRoom(options); rooms.push(value)
   await until(() => guestState.hand === 2, 'next hand in same room');
   assert.equal(guestState.phase, 'playing');
   assert(guestState.players.every(p => p.cards.every(c => c === null)));
-  assert.equal(game.players.reduce((n, p) => n + p.chips, 0) + game.pot, 200);
-  guest.send({ type: 'action', action: 'raise' });
-  await until(() => guestState.turn === 0 && guestState.target === 2, 'second hand guest raise');
+  assert.equal(game.players.reduce((n, p) => n + p.chips, 0) + game.pot, 2000);
+  guest.send({ type: 'action', action: 'raise', amount: 35 });
+  await until(() => guestState.turn === 0 && guestState.target === 7, 'second hand guest raise');
   Flash.act(game, 0, 'call');
   host.send({ type: 'state', value: Flash.view(game, 1) });
   await until(() => guestState.turn === 1, 'host call keeps betting open');
   guest.send({ type: 'action', action: 'show' });
   await until(() => guestState.phase === 'over', 'guest paid show');
   assert(guestState.players.every(p => p.cards.every(Boolean)));
-  assert(game.log.some(s => s.includes('10 call + 5 show')));
-  assert.equal(game.players.reduce((n, p) => n + p.chips, 0), 200);
+  assert(game.log.some(s => s.includes('35 call + 5 show')));
+  assert.equal(game.players.reduce((n, p) => n + p.chips, 0), 2000);
   const thirdErrors = [];
   const third = room({ room: code, password, isHost: false, name: 'Third', onError: e => thirdErrors.push(e) });
   await third.start();
