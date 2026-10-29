@@ -4,7 +4,7 @@ A responsive, two-person Teen Patti house variant. Static HTML, CSS and JavaScri
 
 ## Play
 
-Open the hosted HTTPS page. Enter your name, a shared room code and a password (default `pass`). One person creates the table; the other joins. Keep both pages open. Exactly two seats are accepted. Each starts with 100 chips and antes 5 per hand. Blind wagers are 5 per unit; seen wagers are 10. Check, bet, raise, call, reveal or fold on your turn. Calling keeps betting open. Show pays the outstanding call plus a flat 5 into the pot and immediately reveals both hands; when bets match, Show costs 5. The extra 5 is the same for blind and seen players. Two consecutive checks immediately reveal both hands and settle the pot for free. Both players choose Next hand to keep playing with their balances, or restart with 100 each when a player cannot ante. Full house rules appear in the page.
+Open the hosted HTTPS page. Enter your name, a shared room code and a password (default `pass`). One person creates the table; the other joins. Keep both pages open. Exactly two seats are accepted. Each starts with 100 chips and antes 5 per hand. The blind stake starts at 5; a seen player pays double. Every turn requires a fresh call, raise, Show, or fold; there is no Check. A raise increases the blind stake by 5. Calls keep the hand going. Only a blind player can Show while either player is blind; when both have seen their cards, either may Show on their turn. Show pays the current call plus a flat 5 and immediately reveals both hands. An all-in wager gets a response before automatic showdown; an all-in ante reveals immediately. Both players choose Next hand to keep playing with their balances, or restart with 100 each when a player cannot ante. Full house rules appear in the page.
 
 ## Run and test
 
@@ -28,4 +28,4 @@ The host is authoritative and keeps the deck in its browser; the guest receives 
 
 `index.html`: interface; `style.css`: responsive styling; `engine.js`: game rules; `app.js`: interface wiring; `transport.js`: encrypted rooms; `test.js`: engine verification; `transport.test.js`: isolated and live transport verification; `vendor/`: bundled MQTT.js and license.
 
-Updated clients use the v4 room namespace, so old-version tables cannot block new tables with the same code/password. Existing tabs keep their old in-memory sessions until they leave, close, or refresh; there is no central table store or global administrative delete.
+Updated clients use the v5 room namespace, so old-version tables cannot block new tables with the same code/password. Existing tabs keep their old in-memory sessions until they leave, close, or refresh; there is no central table store or global administrative delete.

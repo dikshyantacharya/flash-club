@@ -121,11 +121,10 @@ function render() {
   } else {
     const l = Flash.limits(state, seat);
     button('See cards', 'see', active && !me.seen);
-    button('Check', 'check', active && l.call === 0);
-    if (l.call > 0) button('Call ' + l.call, 'call', active && l.call <= me.chips);
-    const cost = (state.target + 1 - me.units) * 5 * l.factor;
-    button((state.target ? 'Raise ' : 'Bet ') + cost, 'raise', active && state.target + 1 <= l.max);
-    button('Show ' + l.show, 'show', active && l.show <= me.chips);
+    button((state.wagers ? 'Call ' : 'Bet ') + l.call, 'call', active && l.call <= me.chips);
+    const cost = (state.target + 1) * 5 * l.factor;
+    button('Raise ' + cost, 'raise', active && state.target + 1 <= l.max);
+    if (l.canShow) button('Show ' + l.show, 'show', active && l.show <= me.chips);
     button('Fold', 'fold', active);
   }
   $('history').replaceChildren();
